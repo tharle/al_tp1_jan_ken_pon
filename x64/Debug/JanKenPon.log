@@ -1,0 +1,3 @@
+﻿  main.cpp
+D:\Tharle JC\Algorithme\al_tp1_jan_ken_pon\main.cpp(86,1): warning C4326: le type de retour de 'main' doit être 'int' au lieu de 'void'
+  JanKenPon.vcxproj -> D:\Tharle JC\Algorithme\al_tp1_jan_ken_pon\x64\Debug\JanKenPon.exe
