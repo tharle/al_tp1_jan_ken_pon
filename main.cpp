@@ -33,6 +33,10 @@ const int CHOIX_ROCHE	= 1;
 const int CHOIX_PAPIER	= 2;
 const int CHOIX_CISEAUX	= 3;
 
+const int WIN_TIE = 90;
+const int WIN_PLAYER = 91;
+const int WIN_PC = 92;
+
 
 /**
 * **********************************************
@@ -43,13 +47,21 @@ string namePlayer = NAME_PLAYER_NON_SET;
 int scorePlayer = 0; 
 int scorePc = 0;
 
+void afficherMessageMauvaisOption();
+void afficherMessageGameOver(string mensage);
 void afficherNouvellePartie();
 void afficherPartie();
-void afficherScore();
 void afficherRegles();
-void afficherResultatParciel();
-void afficherResultatFinal();
-int demanderChoixPlayer();
+void afficherResultat();
+void afficherPlayerChoix(int choixPlayer);
+void afficherTitleScreen();
+
+
+void runJanKenPon();
+void runCombat(int choixPlayer);
+void runScore(int winnerOption);
+
+
 void waitEnter();
 void wait();
 void wait(int secs);
@@ -58,56 +70,29 @@ void cleanScreen();
 void separateur();
 
 bool isFinitPartie();
+bool isNamePlayerExist();
 bool isPlayerWin();
 bool isPcWin();
 
+int calculerWinner(int choixPlayer);
+void choisirNewNamePlayer();
+string choixToString(int choixPlayer);
+int demanderChoixPlayer();
+void verifyJeuEstFini();
+int genereteOptionPC(int choixPlayer);
 
-void playerChoisiRoche();
-void playerChoisiPapier();
-void playerChoisiCiseaux();
-void genereteOptionPC();
-
-
-
-
-void main()
+int main()
 {
 	afficherTitleScreen();
 
 }
 
 
-
-// Attendez le une touche du clavier d'utilisateur
-void waitEnter() 
-{
-	system("pause");
-}
-
-
-// Arreter le programme et attendre quelque seconds pour le repartir
-void wait(int secs) 
-{
-	sleep_until(system_clock::now() + seconds(secs));
-}
-
-// Arreter le programme et attendre 1 second pour le repartir
-void wait() 
-{
-	wait(1);
-}
-
-// netoyer l'ecran 
-void cleanScreen() 
-{
-	cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
-}
-
-// ajoute une ligne de separation, jusque parce qu'il est beau.
-void separateur() 
-{
-	cout << "----------------------------------------------------------- " << endl;
-}
+/*******************************************************************
+*
+* AFFICHAGE
+*
+*******************************************************************/
 
 void afficherTitleScreen() 
 {
@@ -124,27 +109,19 @@ void afficherTitleScreen()
 		{
 			afficherNouvellePartie();
 		}
+		else if(option != TITLE_SCREEN_QUITTER) {
+			afficherMessageMauvaisOption();
+			waitEnter();
+		}
 	}
 	
-}
-
-bool isNamePlayerExist()
-{
-	return namePlayer.compare(NAME_PLAYER_NON_SET) != 0;
-}
-
-void afficherNewNamePlayer() 
-{
-	cleanScreen();
-	cout << "Comment tu t'appelle?" << endl;
-	cin >> namePlayer;
 }
 
 void afficherNouvellePartie() 
 {
 	if (!isNamePlayerExist()) 
 	{
-		afficherNewNamePlayer();
+		choisirNewNamePlayer();
 	}
 
 	afficherPartie();
@@ -154,6 +131,8 @@ void afficherPartie()
 {
 	cleanScreen();
 	cout << "Attendez un peu, ta partie est en train d'etre configuree...";
+	scorePlayer = 0;
+	scorePc = 0;
 	wait(3);
 	cleanScreen();
 	cout << "Bienvenue " << namePlayer << endl;
@@ -161,30 +140,194 @@ void afficherPartie()
 	while(!isFinitPartie())
 	{
 		// continuer la partie
-		afficherJeuMenu();
-
+		afficherResultat();
+		runJanKenPon();
 	}
 }
 
-void afficherJeuMenu() 
+void afficherRegles()
 {
-	int opt = demanderChoixPlayer();
-	switch (opt)
+	cleanScreen();
+	separateur();
+	cout << "LES REGLES DE JAN-KEN-POW";
+	separateur();
+}
+
+void afficherPlayerChoix(int choixPlayer)
+{
+	cout<< "Tu as choisi " << choixToString(choixPlayer) << "!" << endl;
+}
+
+void afficherResultat() 
+{
+	separateur();
+	cout << "\t\tSCORE DE LA PARTIE" << endl;
+	cout << "\t\t[" << scorePlayer << "] " << namePlayer << " X [" << scorePc << "] PC" << endl;
+	separateur();
+}
+
+void afficherMessageMauvaisOption() 
+{
+	cout << "Option invalide. STP, Choisir un autre option" << endl;
+}
+
+/*******************************************************************
+*
+* RUN EXTRAS
+*
+*******************************************************************/
+
+void runJanKenPon()
+{
+	int choixPlayer = demanderChoixPlayer();
+	switch (choixPlayer)
 	{
 		case CHOIX_REGLES:
-		afficherRegles();
-		break;
-		case CHOIX_ROCHE:
-			playerChoisiRoche();
+			afficherRegles();
 			break;
-		case CHOIX_PAPIER:
-			playerChoisiPapier();
+		case CHOIX_ROCHE:
+			runCombat(choixPlayer);
+			break;
+		case CHOIX_PAPIER:			
+			runCombat(choixPlayer);
 			break;
 		case CHOIX_CISEAUX:
-			playerChoisiCiseaux();
+			runCombat(choixPlayer);
 			break;
 		default:
-			mouvaisOption();
+			afficherMessageMauvaisOption();
+		break;
+	}
+}
+
+void runCombat(int playerChoix)
+{
+	afficherPlayerChoix(playerChoix);
+	int winnerOption = calculerWinner(playerChoix);
+
+	// add score
+	runScore(winnerOption);
+
+	//valider si game over
+	verifyJeuEstFini();
+
+	cleanScreen();
+}
+
+void runScore(int winnerOption)
+{
+	string mensageWinner = "";
+	switch (winnerOption)
+	{
+		case WIN_PLAYER:
+			scorePlayer++;
+			mensageWinner = "Le "+namePlayer+" a gagne ce tour!";
+		break;
+		case WIN_PC:
+			scorePc++;
+			mensageWinner = "Le PC a gagne ce tour!";
+			break;
+		default:
+			mensageWinner = "Le jeu est nul. Personne ni machine a ganhe!";
+		break;
+	}
+
+	cout << mensageWinner << endl;
+}
+
+int demanderChoixPlayer()
+{
+	int playerChoix = -1;
+	while (playerChoix >= 4 || playerChoix <= -1)
+	{
+		cout << "\t\t[1] Roche" << endl;
+		cout << "\t\t[2] Papier" << endl;
+		cout << "\t\t[3] Cisaux" << endl;
+		cout << "\t\t[0] Regles" << endl;
+		cout << "Tapez le ton choix: ";
+		cin >> playerChoix;
+	}
+
+	return playerChoix;
+}
+
+bool isNamePlayerExist()
+{
+	return namePlayer.compare(NAME_PLAYER_NON_SET) != 0;
+}
+
+void choisirNewNamePlayer()
+{
+	cleanScreen();
+	cout << "Comment tu t'appelle?" << endl;
+	cin >> namePlayer;
+}
+
+void verifyJeuEstFini() 
+{
+	afficherResultat();
+	if (isPlayerWin()) {
+		afficherResultat();
+		afficherMessageGameOver("TU AS GANHE");
+	}
+	else if (isPcWin()) {
+		afficherResultat();
+		afficherMessageGameOver("TU AS PERDU");
+	}
+	waitEnter();
+	
+}
+
+void afficherMessageGameOver(string message) 
+{
+	cleanScreen();
+	separateur();
+	cout<<message<<endl;
+	separateur();
+}
+
+/*
+* Verifier qui ganhe la partie;
+* 91 Player voir WIN_PLAYER
+* 90 Tie WIN_TIE
+* 92 PC WIN_PC
+*/
+int calculerWinner(int choixPlayer)
+{
+	int choixPC = genereteOptionPC(choixPlayer);
+
+	if(choixPlayer == choixPC) return WIN_TIE;
+	if (choixPlayer == CHOIX_ROCHE && choixPC == CHOIX_CISEAUX) return WIN_PLAYER;
+	if (choixPlayer == CHOIX_PAPIER && choixPC == CHOIX_ROCHE) return  WIN_PLAYER;
+	if (choixPlayer == CHOIX_ROCHE && choixPC == CHOIX_PAPIER) return  WIN_PC;
+	if (choixPlayer == CHOIX_PAPIER && choixPC == CHOIX_CISEAUX) return  WIN_PC;
+	
+	return -1;
+	
+}
+
+
+int genereteOptionPC(int choixPlayer)
+{
+	// TODO ajouter possibiliter du pc tricher
+	cout<< "Le PC est en train de choisir!" << endl;
+	wait(3);
+	srand(time(0));
+	return rand() % 3 + 1;
+}
+
+string choixToString(int choixPlayer) 
+{
+	switch (choixPlayer)
+	{
+		case CHOIX_ROCHE:
+			return "roche";
+		case CHOIX_PAPIER:
+			return "papier";
+		case CHOIX_CISEAUX:
+			return "ciseaux";
+		default:
+			return "null";
 		break;
 	}
 }
@@ -203,63 +346,38 @@ bool isPcWin()
 	return scorePc >= SCORE_LIMIT_POUR_FINIR_GAME;
 }
 
-void afficherRegles() 
+/*******************************************************************
+* 
+* FUNCTIONS EXTRAS
+* 
+*******************************************************************/
+
+// Attendez le une touche du clavier d'utilisateur
+void waitEnter()
 {
-	cleanScreen();
-	separateur();
-	cout << "LES REGLES DE JAN-KEN-POW";
-	separateur();
+	system("pause");
 }
 
-int demanderChoixPlayer() 
+// Arreter le programme et attendre quelque seconds pour le repartir
+void wait(int secs)
 {
-	int opt = -1;
-	while (opt < 4 || opt > 0)
-	{
-		cout << "[1] Roche";
-		cout << "[2] Papier";
-		cout << "[3] Cisaux";
-		cout << "[0] Regles";
-		cout << "Tapez le ton choix: ";
-		cin >> opt;
-	}
-
-	return opt;
+	sleep_until(system_clock::now() + seconds(secs));
 }
 
-/*
-* Verifier qui ganhe la partie;
-* 1 Player
-* 0 Tie
-* -1 PC
-*/
-int verifierQuiGanhe(int choixPlayer, int choixPC)
+// Arreter le programme et attendre 1 second pour le repartir
+void wait()
 {
-	cout << "Tu as choisi ROCHE!" << cout;
-	//int optPC = genereteOptionPC();
-
-	if(choixPlayer == choixPC) return 0;
-	if (choixPlayer == CHOIX_ROCHE && choixPC == CHOIX_CISEAUX) return 1;
-	if (choixPlayer == CHOIX_PAPIER && choixPC == CHOIX_ROCHE) return 1;
-	if (choixPlayer == CHOIX_ROCHE && choixPC == CHOIX_PAPIER) return -1;
-	if (choixPlayer == CHOIX_PAPIER && choixPC == CHOIX_CISEAUX) return -1;
-	
+	wait(1);
 }
 
-void playerChoisiPapier() 
+// netoyer l'ecran 
+void cleanScreen()
 {
-	cout << "Tu as choisi PAPIER!" << cout;
+	cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 }
 
-void playerChoisiCiseaux() 
+// ajoute une ligne de separation, jusque parce qu'il est beau.
+void separateur()
 {
-	cout << "Tu as choisi CISEAUX!" << cout;
-}
-
-int genereteOptionPC() 
-{
-	cout << "Le PC est en train de choisir!" << cout;
-	wait(3);
-	srand(time(0));
-	return rand() % 3 + 1;
+	cout << "----------------------------------------------------------- " << endl;
 }
