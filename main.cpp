@@ -27,6 +27,7 @@ const int TITLE_SCREEN_NOUVELLE_PARTIE = 1;
 const int TITLE_SCREEN_QUITTER = 2;
 const int SCORE_LIMIT_POUR_FINIR_GAME = 3;
 const string NAME_PLAYER_NON_SET = "NON_PLAYER";
+const string NAME_PC = "PC";
 
 const int CHOIX_REGLES = 0;
 const int CHOIX_ROCHE	= 1;
@@ -53,7 +54,7 @@ void afficherNouvellePartie();
 void afficherPartie();
 void afficherRegles();
 void afficherResultat();
-void afficherPlayerChoix(int choixPlayer);
+void afficherChoix(int choixPlayer, string name);
 void afficherTitleScreen();
 
 
@@ -80,6 +81,7 @@ string choixToString(int choixPlayer);
 int demanderChoixPlayer();
 void verifyJeuEstFini();
 int genereteOptionPC(int choixPlayer);
+int cheatPC(int choixPlayer);
 
 int main()
 {
@@ -148,14 +150,26 @@ void afficherPartie()
 void afficherRegles()
 {
 	cleanScreen();
+	string messageRegles1 = "JAN-KEN-POW (du japonais) est un jeu, appelé également papier-caillou-ciseaux\n";
+	messageRegles1 +=		" ou chifoumi en France, roche-papier-ciseaux au Québec, pierre-papier-ciseaux\n";
+	messageRegles1 +=		" en France et Belgique, feuille-caillou-ciseaux en Suisse, Rochambeau aux États-Unis,\n";
+	messageRegles1 +=		" morra en Italie. Il existe de nombreuses variantes régionales.";
+	string messageRegles2 =	"De façon générale, la pierre bat les ciseaux (en les émoussant), les ciseaux battent\n" ;
+	messageRegles2 +=		" la feuille (en la coupant), la feuille bat la pierre (en l'enveloppant). Ainsi chaque\n";
+	messageRegles2 +=		" coup bat un autre coup, fait match nul contre le deuxième (son homologue) et est battu\n";
+	messageRegles2 +=		" par le troisième.";
 	separateur();
-	cout << "LES REGLES DE JAN-KEN-POW";
+	cout << "\t\tLES REGLES DE JAN-KEN-POW" << endl;
 	separateur();
+	cout << messageRegles1 << endl;
+	cout << messageRegles2 << endl;
+	waitEnter();
+	cleanScreen();
 }
 
-void afficherPlayerChoix(int choixPlayer)
+void afficherChoix(int choixPlayer, string name)
 {
-	cout<< "Tu as choisi " << choixToString(choixPlayer) << "!" << endl;
+	cout<< "Le "<<name<<" as choisi " << choixToString(choixPlayer) << "!" << endl;
 }
 
 void afficherResultat() 
@@ -202,7 +216,7 @@ void runJanKenPon()
 
 void runCombat(int playerChoix)
 {
-	afficherPlayerChoix(playerChoix);
+	afficherChoix(playerChoix, namePlayer);
 	int winnerOption = calculerWinner(playerChoix);
 
 	// add score
@@ -225,7 +239,7 @@ void runScore(int winnerOption)
 		break;
 		case WIN_PC:
 			scorePc++;
-			mensageWinner = "Le PC a gagne ce tour!";
+			mensageWinner = "Le " + NAME_PC + " a gagne ce tour!";
 			break;
 		default:
 			mensageWinner = "Le jeu est nul. Personne ni machine a ganhe!";
@@ -296,24 +310,52 @@ int calculerWinner(int choixPlayer)
 {
 	int choixPC = genereteOptionPC(choixPlayer);
 
+	afficherChoix(choixPC, NAME_PC);
+
 	if(choixPlayer == choixPC) return WIN_TIE;
 	if (choixPlayer == CHOIX_ROCHE && choixPC == CHOIX_CISEAUX) return WIN_PLAYER;
 	if (choixPlayer == CHOIX_PAPIER && choixPC == CHOIX_ROCHE) return  WIN_PLAYER;
 	if (choixPlayer == CHOIX_ROCHE && choixPC == CHOIX_PAPIER) return  WIN_PC;
 	if (choixPlayer == CHOIX_PAPIER && choixPC == CHOIX_CISEAUX) return  WIN_PC;
 	
-	return -1;
+	return WIN_TIE;
 	
 }
 
 
 int genereteOptionPC(int choixPlayer)
 {
-	// TODO ajouter possibiliter du pc tricher
-	cout<< "Le PC est en train de choisir!" << endl;
-	wait(3);
 	srand(time(0));
-	return rand() % 3 + 1;
+	int isPcTriche = rand() % 2;
+	int choixPC;
+
+	if (isPcTriche == 0) {
+		cout << "Le "<< NAME_PC <<" est en train de CHOISIR!" << endl;
+		srand(time(0)); 
+		choixPC = rand() % 3 + 1;
+	} else 
+	{
+		cout << "Le " << NAME_PC << " est en train de TRICHER!" << endl;
+		choixPC = cheatPC(choixPlayer);
+	}
+	wait();
+
+	return choixPC;
+}
+
+int cheatPC(int choixPlayer) 
+{
+	switch (choixPlayer) {
+		case CHOIX_ROCHE:
+			return CHOIX_PAPIER;
+		case CHOIX_PAPIER:
+			return CHOIX_CISEAUX;
+		case CHOIX_CISEAUX:
+			return CHOIX_ROCHE;
+		default:
+			return CHOIX_ROCHE; // si la choix player est pas bonne, affiche le ROCHE par default
+			break;
+	}
 }
 
 string choixToString(int choixPlayer) 
@@ -373,7 +415,8 @@ void wait()
 // netoyer l'ecran 
 void cleanScreen()
 {
-	cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+	system("cls");
+	//cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 }
 
 // ajoute une ligne de separation, jusque parce qu'il est beau.
