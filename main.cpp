@@ -56,6 +56,7 @@ void afficherRegles();
 void afficherResultat();
 void afficherChoix(int choixPlayer, string name);
 void afficherTitleScreen();
+void afficherTexteStyleTypeWriter(string message, int tempsParLettreEnwaitAvecMiliSeconds);
 
 
 void runJanKenPon();
@@ -64,8 +65,8 @@ void runScore(int winnerOption);
 
 
 void waitEnter();
-void wait();
 void wait(int secs);
+void waitAvecMiliSeconds(int milisecs);
 
 void cleanScreen();
 void separateur();
@@ -161,10 +162,21 @@ void afficherRegles()
 	separateur();
 	cout << "\t\tLES REGLES DE JAN-KEN-POW" << endl;
 	separateur();
-	cout << messageRegles1 << endl;
-	cout << messageRegles2 << endl;
+	afficherTexteStyleTypeWriter(messageRegles1, 30);
+	cout<< endl<< endl;
+	waitEnter();
+	afficherTexteStyleTypeWriter(messageRegles2, 30);
+	cout << endl << endl;
 	waitEnter();
 	cleanScreen();
+}
+
+void afficherTexteStyleTypeWriter(string message, int tempsParLettreEnwaitAvecMiliSeconds)
+{
+	for (int i = 0; i < message.length(); i++) {
+		cout << message[i] ;
+		waitAvecMiliSeconds(tempsParLettreEnwaitAvecMiliSeconds);
+	}
 }
 
 void afficherChoix(int choixPlayer, string name)
@@ -313,10 +325,12 @@ int calculerWinner(int choixPlayer)
 	afficherChoix(choixPC, NAME_PC);
 
 	if(choixPlayer == choixPC) return WIN_TIE;
-	if (choixPlayer == CHOIX_ROCHE && choixPC == CHOIX_CISEAUX) return WIN_PLAYER;
-	if (choixPlayer == CHOIX_PAPIER && choixPC == CHOIX_ROCHE) return  WIN_PLAYER;
-	if (choixPlayer == CHOIX_ROCHE && choixPC == CHOIX_PAPIER) return  WIN_PC;
-	if (choixPlayer == CHOIX_PAPIER && choixPC == CHOIX_CISEAUX) return  WIN_PC;
+	if (choixPlayer == CHOIX_ROCHE		&& choixPC == CHOIX_CISEAUX) return WIN_PLAYER;
+	if (choixPlayer == CHOIX_PAPIER		&& choixPC == CHOIX_ROCHE) return  WIN_PLAYER;
+	if (choixPlayer == CHOIX_CISEAUX	&& choixPC == CHOIX_PAPIER) return  WIN_PLAYER;
+	if (choixPlayer == CHOIX_ROCHE		&& choixPC == CHOIX_PAPIER) return  WIN_PC;
+	if (choixPlayer == CHOIX_PAPIER		&& choixPC == CHOIX_CISEAUX) return  WIN_PC;
+	if (choixPlayer == CHOIX_CISEAUX	&& choixPC == CHOIX_ROCHE) return  WIN_PC;
 	
 	return WIN_TIE;
 	
@@ -338,7 +352,7 @@ int genereteOptionPC(int choixPlayer)
 		cout << "Le " << NAME_PC << " est en train de TRICHER!" << endl;
 		choixPC = cheatPC(choixPlayer);
 	}
-	wait();
+	wait(1);
 
 	return choixPC;
 }
@@ -403,20 +417,18 @@ void waitEnter()
 // Arreter le programme et attendre quelque seconds pour le repartir
 void wait(int secs)
 {
-	sleep_until(system_clock::now() + seconds(secs));
+	waitAvecMiliSeconds(secs * 1000);
 }
 
-// Arreter le programme et attendre 1 second pour le repartir
-void wait()
+void waitAvecMiliSeconds(int milisecs)
 {
-	wait(1);
+	sleep_until(system_clock::now() + milliseconds(milisecs));
 }
 
 // netoyer l'ecran 
 void cleanScreen()
 {
 	system("cls");
-	//cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 }
 
 // ajoute une ligne de separation, jusque parce qu'il est beau.
